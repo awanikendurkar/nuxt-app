@@ -3,7 +3,7 @@
     <section class="post">
       <h1 class="post-title">{{ loadedPost.title }}</h1>
       <div class="post-details">
-        <div class="post-detail">{{ loadedPost.updatedDate }}</div>
+        <div class="post-detail">{{ loadedPost.updatedDate | date }}</div>
         <div class="post-detail">{{ loadedPost.author }}</div>
       </div>
       <p class="post-content">{{ loadedPost.content }}</p>
@@ -19,22 +19,23 @@
 
 <script>
 export default {
-  asyncData(context, callback) {
-    setTimeout(() => {
-      callback(null, {
-        loadedPost: {
-          id: "1",
-          title: "First Post (id: " + context.route.params.id + ") ",
-          previewText: "This is the first post ever!",
-          author: "Awani",
-          updatedDate: new Date(),
-          content:
-            "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Asperiores amet odit nostrum reiciendis odio possimus aut, voluptatum ratione ipsa quam autem qui ex voluptates quas tempore maxime itaque tenetur similique.",
-          thumbnail:
-            "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8dGVjaG5vbG9neXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60",
-        },
-      });
-    }, 1000);
+  asyncData(context) {
+    if (context.payload) {
+      return {
+        loadedPost: context.payload.postData,
+      };
+    }
+    return context.app.$axios
+      .$get("/posts/" + context.params.id + ".json")
+      .then((data) => {
+        return {
+          loadedPost: data,
+        };
+      })
+      .catch((e) => context.error(e));
+  },
+  head: {
+    title: "A blog post",
   },
 };
 </script>

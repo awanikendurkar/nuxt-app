@@ -1,7 +1,7 @@
 <template>
   <div class="admin-post-page">
     <section class="update-form">
-      <AdminPostForm :post="loadedPost" />
+      <AdminPostForm :post="loadedPost" @submit="onSubmitted" />
     </section>
   </div>
 </template>
@@ -10,19 +10,40 @@
 import AdminPostForm from "@/components/Admin/AdminPostForm";
 export default {
   layout: "admin",
+  middleware: ["check-auth", "auth"],
   components: {
     AdminPostForm,
   },
-  data() {
-    return {
-      loadedPost: {
-        author: "Awani",
-        title: "My Awesome Post",
-        content: "Super amaze, thanks for that!",
-        thumbnailLink:
-          "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8dGVjaG5vbG9neXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=800&q=60",
-      },
-    };
+  asyncData(context) {
+    return context.app.$axios
+      .$get("/posts/" + context.params.id + ".json")
+      .then((data) => {
+        return {
+          loadedPost: data,
+        };
+      })
+      .catch((e) => context.error(e));
+  },
+  asyncData(context) {
+    return context.app.$axios
+      .$get(
+        "https://nuxt-app-86724-default-rtdb.asia-southeast1.firebasedatabase.app/posts/" +
+          context.params.postId +
+          ".json"
+      )
+      .then((data) => {
+        return {
+          loadedPost: { ...data, id: context.params.postId },
+        };
+      })
+      .catch((e) => context.error());
+  },
+  methods: {
+    onSubmitted(editedPost) {
+      this.$store.dispatch("editPost", editedPost).then(() => {
+        this.$router.push("/admin");
+      });
+    },
   },
 };
 </script>
